@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Router Map - Toggle Basemap</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body { margin: 0; padding: 0; }
+        #map { width: 100%; height: 100vh; background-color: #f4f4f4; }
+    </style>
+</head>
+<body>
+
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="data_router.js"></script>
+
+    <script>
+        // 1. Inisialisasi Peta
+        var map = L.map('map', {
+            maxZoom: 22,
+            minZoom: 16
+        });
+
+        // 2. Definisi Peta Dasar (Basemap)
+        var osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxNativeZoom: 19,
+            maxZoom: 22,
+            attribution: '&copy; OpenStreetMap contributors'
+        });
+
+        // 3. Layer Kosong (Tanpa Peta)
+        var emptyLayer = L.layerGroup(); 
+
+        // Set Default: Kita mulai tanpa peta dasar sesuai keinginan Anda sebelumnya
+        emptyLayer.addTo(map);
+
+        // 4. Menampilkan Data Router
+        var routerLayer = L.geoJSON(dataRouter, {
+            pointToLayer: function (feature, latlng) {
+                return L.circleMarker(latlng, {
+                    radius: 9,
+                    fillColor: (feature.properties.AP === "EAP") ? "#ff4757" : "#2ed573",
+                    color: "#2f3542",
+                    weight: 2,
+                    fillOpacity: 1
+                });
+            },
+            onEachFeature: function (feature, layer) {
+                layer.bindPopup(
+                    "<b>Gedung:</b> " + feature.properties.NAMGED + "<br>" +
+                    "<b>Lantai:</b> " + feature.properties.LT + "<br>" +
+                    "<b>Speed:</b> " + feature.properties.Speed
+                );
+            }
+        }).addTo(map);
+
+        // 5. Membuat Tombol UI untuk Mengatur Peta Dasar
+        var baseMaps = {
+            "Pakai Peta Dasar": osmLayer,
+            "Tanpa Peta (Polos)": emptyLayer
+        };
+
+        // Menambahkan tombol kontrol ke pojok kanan atas
+        L.control.layers(baseMaps, null, { collapsed: false }).addTo(map);
+
+        // 6. Otomatis Zoom ke Data
+        var bounds = routerLayer.getBounds();
+        map.fitBounds(bounds, { padding: [100, 100] });
+
+        // Kunci area agar tidak geser terlalu jauh
+        var lockBounds = bounds.pad(0.2); 
+        map.setMaxBounds(lockBounds);
+    </script>
+</body>
+</html>
